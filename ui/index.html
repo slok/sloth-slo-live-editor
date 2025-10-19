@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Sloth SLO Live Editor</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.0.6/css/pico.min.css" />
+
+
+    <script src="wasm_exec.js"></script>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: system-ui, sans-serif;
+        }
+
+        main {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            max-width: none;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid var(--pico-muted-border-color);
+        }
+
+        nav div {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        button {
+            font-size: 0.8rem;
+            padding: 0.35rem 0.75rem;
+            line-height: 1.25;
+        }
+
+        section {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            gap: 1rem;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        textarea,
+        pre {
+            width: 50%;
+            height: 100%;
+            font-family: monospace;
+            font-size: 0.65rem;
+            line-height: 1.15;
+            resize: none;
+            overflow: auto;
+        }
+
+        pre {
+            background: var(--pico-muted-border-color);
+            padding: 1rem;
+            border-radius: 0.25rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .error {
+            color: var(--pico-del-color);
+            font-weight: bold;
+        }
+
+        .error::before {
+            content: "❌ ";
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <nav>
+            <hgroup>
+                <h2>Sloth SLO Live Editor</h2>
+                <p>Generate Prometheus SLO rules</p>
+            </hgroup>
+            <div>
+                <button id="copyBtn">Copy Output</button>
+                <button id="clearBtn" class="secondary">Clear Editor</button>
+            </div>
+        </nav>
+
+        <section>
+            <textarea id="sloInput" placeholder="Write your SLO spec here..."></textarea>
+            <pre id="sloOutput"></pre>
+        </section>
+    </main>
+
+    <script>
+        const go = new Go();
+
+        async function initWasm() {
+            const resp = await fetch("main.wasm");
+            const bytes = await resp.arrayBuffer();
+            const result = await WebAssembly.instantiate(bytes, go.importObject);
+            go.run(result.instance);
+            setupEditor();
+        }
+
+        function setupEditor() {
+            const input = document.getElementById("sloInput");
+            const output = document.getElementById("sloOutput");
+            const copyBtn = document.getElementById("copyBtn");
+            const clearBtn = document.getElementById("clearBtn");
+
+            let debounceTimer;
+            const debounceDelay = 500;
+
+            async function render() {
+                try {
+                    const yaml = input.value.trim();
+                    if (!yaml) {
+                        output.textContent = "";
+                        output.className = "";
+                        return;
+                    }
+
+                    // Generate SLO from raw YAML (Calls Sloth WASM).
+                    const raw = generateSLOFromRaw(yaml);
+
+                    // Try to parse JSON; fallback to raw string
+                    let textToShow = "";
+                    try {
+                        const parsed = JSON.parse(raw);
+                        if (parsed && typeof parsed === "object" && "resultRendered" in parsed) {
+                            textToShow = String(parsed.resultRendered ?? "");
+                        } else {
+                            textToShow = raw;
+                        }
+                    } catch {
+                        textToShow = raw;
+                    }
+
+                    // Detect error message pattern
+                    if (textToShow.trim().toLowerCase().startsWith("error: ")) {
+                        output.className = "error";
+                    } else {
+                        output.className = "";
+                    }
+
+                    output.textContent = textToShow || "";
+                } catch (err) {
+                    output.className = "error";
+                    output.textContent = String(err && err.message ? err.message : err);
+                }
+            }
+
+            input.addEventListener("input", () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(render, debounceDelay);
+            });
+
+            copyBtn.addEventListener("click", async () => {
+                try {
+                    await navigator.clipboard.writeText(output.textContent);
+                    alert("Copied to clipboard!");
+                } catch {
+                    alert("Copy failed");
+                }
+            });
+
+            clearBtn.addEventListener("click", () => {
+                input.value = "";
+                output.textContent = "";
+                output.className = "";
+            });
+        }
+
+        initWasm();
+    </script>
+</body>
+
+</html>
