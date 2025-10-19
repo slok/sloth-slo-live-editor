@@ -13,12 +13,11 @@ import (
 	"encoding/json"
 	"syscall/js"
 
-	"github.com/slok/sloth/pkg/lib"
 	sloth "github.com/slok/sloth/pkg/lib"
 )
 
-var sloGenerator = func() *lib.PrometheusSLOGenerator {
-	gen, err := sloth.NewPrometheusSLOGenerator(sloth.Config{
+var sloGenerator = func() *sloth.PrometheusSLOGenerator {
+	gen, err := sloth.NewPrometheusSLOGenerator(sloth.PrometheusSLOGeneratorConfig{
 		ExtraLabels: map[string]string{"source": "wasm-sloth"},
 	})
 	if err != nil {

@@ -2,7 +2,7 @@ module github.com/slok/sloth-slo-live-editor
 
 go 1.25.0
 
-require github.com/slok/sloth v0.14.1-0.20251018091736-484e1c21f619
+require github.com/slok/sloth v0.14.1-0.20251019171924-436579f75e75
 
 require (
 	github.com/OpenSLO/oslo v0.12.0 // indirect
