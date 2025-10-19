@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <title>Sloth SLO Live Editor</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.0.6/css/pico.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.orange.min.css">
 
 
     <script src="wasm_exec.js"></script>
@@ -89,7 +89,7 @@
     <main>
         <nav>
             <hgroup>
-                <h2>Sloth SLO Live Editor</h2>
+                <h2><a href="https://sloth.dev">Sloth</a> SLO Live Editor</h2>
                 <p>Generate Prometheus SLO rules</p>
             </hgroup>
             <div>
@@ -103,6 +103,12 @@
             <pre id="sloOutput"></pre>
         </section>
     </main>
+
+    <footer>
+        <p style="text-align: center; font-size: 1rem;">
+            Powered by <a href="https://sloth.dev">Sloth</a>.
+        </p>
+    </footer>
 
     <script>
         const go = new Go();
