@@ -7,8 +7,8 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.orange.min.css">
 
-
     <script src="wasm_exec.js"></script>
+    <script src="index.js"></script>
 
     <style>
         html,
@@ -94,6 +94,7 @@
             </hgroup>
             <div>
                 <button id="copyBtn">Copy Output</button>
+                <button id="shareBtn">Share</button>
                 <button id="clearBtn" class="secondary">Clear Editor</button>
             </div>
         </nav>
@@ -104,88 +105,6 @@
         </section>
     </main>
 
-    <script>
-        const go = new Go();
-
-        async function initWasm() {
-            const resp = await fetch("main.wasm");
-            const bytes = await resp.arrayBuffer();
-            const result = await WebAssembly.instantiate(bytes, go.importObject);
-            go.run(result.instance);
-            setupEditor();
-        }
-
-        function setupEditor() {
-            const input = document.getElementById("sloInput");
-            const output = document.getElementById("sloOutput");
-            const copyBtn = document.getElementById("copyBtn");
-            const clearBtn = document.getElementById("clearBtn");
-
-            let debounceTimer;
-            const debounceDelay = 500;
-
-            async function render() {
-                try {
-                    const yaml = input.value.trim();
-                    if (!yaml) {
-                        output.textContent = "";
-                        output.className = "";
-                        return;
-                    }
-
-                    // Generate SLO from raw YAML (Calls Sloth WASM).
-                    const raw = generateSLOFromRaw(yaml);
-
-                    // Try to parse JSON; fallback to raw string
-                    let textToShow = "";
-                    try {
-                        const parsed = JSON.parse(raw);
-                        if (parsed && typeof parsed === "object" && "resultRendered" in parsed) {
-                            textToShow = String(parsed.resultRendered ?? "");
-                        } else {
-                            textToShow = raw;
-                        }
-                    } catch {
-                        textToShow = raw;
-                    }
-
-                    // Detect error message pattern
-                    if (textToShow.trim().toLowerCase().startsWith("error: ")) {
-                        output.className = "error";
-                    } else {
-                        output.className = "";
-                    }
-
-                    output.textContent = textToShow || "";
-                } catch (err) {
-                    output.className = "error";
-                    output.textContent = String(err && err.message ? err.message : err);
-                }
-            }
-
-            input.addEventListener("input", () => {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(render, debounceDelay);
-            });
-
-            copyBtn.addEventListener("click", async () => {
-                try {
-                    await navigator.clipboard.writeText(output.textContent);
-                    alert("Copied to clipboard!");
-                } catch {
-                    alert("Copy failed");
-                }
-            });
-
-            clearBtn.addEventListener("click", () => {
-                input.value = "";
-                output.textContent = "";
-                output.className = "";
-            });
-        }
-
-        initWasm();
-    </script>
 </body>
 
 </html>

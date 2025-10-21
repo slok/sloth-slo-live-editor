@@ -1,6 +1,6 @@
 # sloth-slo-live-editor
 
-Try it live: https://slok.github.io/sloth-slo-live-editor/
+Try it live: https://live.sloth.dev/
 
 This project brings [Sloth] SLO generator directly to your browser using WASM.
 It uses the new [Sloth] Go library as a frontend dependency to render Prometheus rules for your SLOs, no CLI, no backend, just your browser.

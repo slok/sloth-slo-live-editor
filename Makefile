@@ -18,7 +18,7 @@ build: ## Builds the production artifacts.
 	@mkdir -p ./out
 	@GOOS=js GOARCH=wasm $(GO_BIN) build -o ./out/main.wasm main.go
 	@cp $(WASM_RUNTIME_PATH) ./out/
-	@cp ./ui/index.html ./out/
+	@cp -r ./ui/* ./out/
 	@echo "Build completed. Artifacts are in the ./out directory."
 
 .PHONY: run
