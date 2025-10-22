@@ -7,15 +7,14 @@ function getQueryParam(name) {
     return urlParams.get(name);
 }
 
-// Helper to decode base64 safely
-function decodeBase64(b64) {
-    try {
-        // decodeURIComponent handles URL-safe base64
-        return atob(decodeURIComponent(b64.replace(/\s/g, "")));
-    } catch {
-        return "";
-    }
+function decodeURLData(encodedData) {
+    return LZString.decompressFromEncodedURIComponent(encodedData);
 }
+
+function encodeURLData(decodedData) {
+    return LZString.compressToEncodedURIComponent(decodedData);
+}
+
 
 async function initWasm() {
     const resp = await fetch("main.wasm");
@@ -25,22 +24,18 @@ async function initWasm() {
     setupEditor();
 }
 
- // Helper to encode YAML to base64 (URL safe)
-function encodeBase64(str) {
-    // btoa only works with latin1, so encodeURIComponent first
-    return encodeURIComponent(btoa(str));
-}
+
 
 // Update URL with base64 YAML
 function updateUrlWithYaml(yaml, sloPlugin) {
     let url = window.location.origin + window.location.pathname;
     if (yaml) {
-        const base64Yaml = encodeBase64(yaml);
+        const base64Yaml = encodeURLData(yaml);
         url += `?slo-spec-b64=${base64Yaml}`;
     }
     
     if (sloPlugin) {
-        const base64Plugin = encodeBase64(sloPlugin);
+        const base64Plugin = encodeURLData(sloPlugin);
         url += `&slo-plugin-b64=${base64Plugin}`;
     }
     
@@ -60,7 +55,7 @@ function setupEditor() {
     // If ?slo-spec-b64=... is present, decode and set textarea
     const b64Yaml = getQueryParam("slo-spec-b64");
     if (b64Yaml) {
-        const decodedYaml = decodeBase64(b64Yaml);
+        const decodedYaml = decodeURLData(b64Yaml);
         if (decodedYaml) {
             input.value = decodedYaml;
         }
@@ -68,7 +63,7 @@ function setupEditor() {
 
     const b64Plugin = getQueryParam("slo-plugin-b64");
     if (b64Plugin && pluginInput) {
-        const decodedPlugin = decodeBase64(b64Plugin);
+        const decodedPlugin = decodeURLData(b64Plugin);
         if (decodedPlugin) {
             pluginInput.value = decodedPlugin;
         }
