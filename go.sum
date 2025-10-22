@@ -140,8 +140,8 @@ github.com/prometheus/sigv4 v0.2.0 h1:qDFKnHYFswJxdzGeRP63c4HlH3Vbn1Yf/Ao2zabtVX
 github.com/prometheus/sigv4 v0.2.0/go.mod h1:D04rqmAaPPEUkjRQxGqjoxdyJuyCh6E0M18fZr0zBiE=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
-github.com/slok/sloth v0.14.1-0.20251019171924-436579f75e75 h1:GPeCiBqwHi05LMhS8nqpD/aV/vAIfLhTnkKqkdaER08=
-github.com/slok/sloth v0.14.1-0.20251019171924-436579f75e75/go.mod h1:YMSYEOikmCHfLOPVL9dys1ekofffamMbHMqeyTVfqoQ=
+github.com/slok/sloth v0.14.1-0.20251022201012-f3bf96293561 h1:fhRvqx9wq5AqUkspCg4LwyW+g0d63kgUKAi6rD6c7Lc=
+github.com/slok/sloth v0.14.1-0.20251022201012-f3bf96293561/go.mod h1:YMSYEOikmCHfLOPVL9dys1ekofffamMbHMqeyTVfqoQ=
 github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=
 github.com/spf13/pflag v1.0.10/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
