@@ -1,6 +1,9 @@
 
 const go = new Go();
 
+const urlParamSLOSpec = "slo-spec";
+const urlParamSLOPlugin = "slo-plugin";
+
 // Helper to get query param value
 function getQueryParam(name) {
     const urlParams = new URLSearchParams(window.location.search);
@@ -31,12 +34,12 @@ function updateUrlWithYaml(yaml, sloPlugin) {
     let url = window.location.origin + window.location.pathname;
     if (yaml) {
         const base64Yaml = encodeURLData(yaml);
-        url += `?slo-spec-b64=${base64Yaml}`;
+        url += `?${urlParamSLOSpec}=${base64Yaml}`;
     }
     
     if (sloPlugin) {
         const base64Plugin = encodeURLData(sloPlugin);
-        url += `&slo-plugin-b64=${base64Plugin}`;
+        url += `&${urlParamSLOPlugin}=${base64Plugin}`;
     }
     
     window.history.replaceState(null, '', url);
@@ -52,8 +55,7 @@ function setupEditor() {
     const shareBtn = document.getElementById("shareBtn");
     const clearBtn = document.getElementById("clearBtn");
 
-    // If ?slo-spec-b64=... is present, decode and set textarea
-    const b64Yaml = getQueryParam("slo-spec-b64");
+    const b64Yaml = getQueryParam(urlParamSLOSpec);
     if (b64Yaml) {
         const decodedYaml = decodeURLData(b64Yaml);
         if (decodedYaml) {
@@ -61,7 +63,7 @@ function setupEditor() {
         }
     }
 
-    const b64Plugin = getQueryParam("slo-plugin-b64");
+    const b64Plugin = getQueryParam(urlParamSLOPlugin);
     if (b64Plugin && pluginInput) {
         const decodedPlugin = decodeURLData(b64Plugin);
         if (decodedPlugin) {
