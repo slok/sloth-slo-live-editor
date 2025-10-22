@@ -25,8 +25,33 @@ async function initWasm() {
     setupEditor();
 }
 
+ // Helper to encode YAML to base64 (URL safe)
+function encodeBase64(str) {
+    // btoa only works with latin1, so encodeURIComponent first
+    return encodeURIComponent(btoa(str));
+}
+
+// Update URL with base64 YAML
+function updateUrlWithYaml(yaml, sloPlugin) {
+    let url = window.location.origin + window.location.pathname;
+    if (yaml) {
+        const base64Yaml = encodeBase64(yaml);
+        url += `?slo-spec-b64=${base64Yaml}`;
+    }
+    
+    if (sloPlugin) {
+        const base64Plugin = encodeBase64(sloPlugin);
+        url += `&slo-plugin-b64=${base64Plugin}`;
+    }
+    
+    window.history.replaceState(null, '', url);
+    
+    return url;
+}
+
 function setupEditor() {
     const input = document.getElementById("sloInput");
+    const pluginInput = document.getElementById("sloPluginInput");
     const output = document.getElementById("sloOutput");
     const copyBtn = document.getElementById("copyBtn");
     const shareBtn = document.getElementById("shareBtn");
@@ -41,34 +66,31 @@ function setupEditor() {
         }
     }
 
-    // Helper to encode YAML to base64 (URL safe)
-    function encodeBase64(str) {
-        // btoa only works with latin1, so encodeURIComponent first
-        return encodeURIComponent(btoa(str));
+    const b64Plugin = getQueryParam("slo-plugin-b64");
+    if (b64Plugin && pluginInput) {
+        const decodedPlugin = decodeBase64(b64Plugin);
+        if (decodedPlugin) {
+            pluginInput.value = decodedPlugin;
+        }
     }
 
-    // Update URL with base64 YAML
-    function updateUrlWithYaml(yaml) {
-        const base64Yaml = encodeBase64(yaml);
-        const url = `${window.location.pathname}?slo-spec-b64=${base64Yaml}`;
-        window.history.replaceState(null, '', url);
-        return window.location.origin + url;
-    }
-
+   
     let debounceTimer;
     const debounceDelay = 500;
 
     async function render() {
         try {
             const yaml = input.value.trim();
+            const pluginCode = pluginInput ? pluginInput.value.trim() : "";
             if (!yaml) {
-                output.textContent = "";
+                output.value = "";
                 output.className = "";
+                output.setAttribute("aria-invalid", "false");
                 return;
             }
 
-            // Generate SLO from raw YAML (Calls Sloth WASM).
-            const raw = generateSLOFromRaw(yaml);
+            // Generate SLO from raw YAML and plugin code (Calls Sloth WASM).
+            const raw = generateSLOFromRaw(yaml, pluginCode);
 
             // Try to parse JSON; fallback to raw string
             let textToShow = "";
@@ -86,31 +108,34 @@ function setupEditor() {
             // Detect error message pattern
             if (textToShow.trim().toLowerCase().startsWith("error: ")) {
                 output.className = "error";
+                output.setAttribute("aria-invalid", "true");
             } else {
                 output.className = "";
+                output.setAttribute("aria-invalid", "false");
             }
 
-            output.textContent = textToShow || "";
+            output.value = textToShow || "";
         } catch (err) {
             output.className = "error";
-            output.textContent = String(err && err.message ? err.message : err);
+            output.value = String(err && err.message ? err.message : err);
+            output.setAttribute("aria-invalid", "true");
         }
     }
 
-    input.addEventListener("input", () => {
+    function debouncedRenderAndUrl() {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             render();
-            // Update URL on every change
+            // Update URL on every change (only for SLO YAML)
             const yaml = input.value.trim();
-            if (yaml) {
-                updateUrlWithYaml(yaml);
-            } else {
-                // Remove param if empty
-                window.history.replaceState(null, '', window.location.pathname);
-            }
+            const sloPlugin = pluginInput.value.trim();
+            updateUrlWithYaml(yaml, sloPlugin);
         }, debounceDelay);
-    });
+    }
+
+    input.addEventListener("input", debouncedRenderAndUrl);
+    pluginInput.addEventListener("input", debouncedRenderAndUrl);
+    
 
     copyBtn.addEventListener("click", async () => {
         try {
@@ -128,7 +153,8 @@ function setupEditor() {
             alert("Editor is empty. Please write your SLO spec first.");
             return;
         }
-        const shareUrl = updateUrlWithYaml(yaml);
+        const sloPlugin = pluginInput.value.trim();
+        const shareUrl = updateUrlWithYaml(yaml, sloPlugin);
         try {
             await navigator.clipboard.writeText(shareUrl);
             alert("Shareable URL copied to clipboard!");
@@ -139,13 +165,15 @@ function setupEditor() {
 
     clearBtn.addEventListener("click", () => {
         input.value = "";
-        output.textContent = "";
+        output.value = "";
+        pluginInput.value = "";
         output.className = "";
+        output.setAttribute("aria-invalid", "false");
     });
 
     // If we loaded YAML from URL, render immediately
     if (input.value) {
-        setTimeout(render, 0);
+        render();
     }
 }
 

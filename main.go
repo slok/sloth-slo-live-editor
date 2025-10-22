@@ -11,7 +11,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io/fs"
 	"syscall/js"
+	"testing/fstest"
 
 	sloth "github.com/slok/sloth/pkg/lib"
 )
@@ -26,6 +28,25 @@ var sloGenerator = func() *sloth.PrometheusSLOGenerator {
 	return gen
 }()
 
+func getGenerator(sloPlugin string) (*sloth.PrometheusSLOGenerator, error) {
+	if sloPlugin == "" {
+		return sloGenerator, nil
+	}
+
+	// We need a new generator with the plugin loaded.
+	plugFS := make(fstest.MapFS)
+	plugFS["plugin.go"] = &fstest.MapFile{Data: []byte(sloPlugin)}
+	gen, err := sloth.NewPrometheusSLOGenerator(sloth.PrometheusSLOGeneratorConfig{
+		ExtraLabels: map[string]string{"source": "wasm-sloth"},
+		PluginsFS:   []fs.FS{plugFS},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return gen, nil
+}
+
 type sloGenOut struct {
 	ResultRendered string                            `json:"resultRendered"`
 	Result         sloth.SLOGroupPrometheusStdResult `json:"result"`
@@ -33,14 +54,23 @@ type sloGenOut struct {
 
 // generateSLOFromRaw is a JS-exposed function that takes SLO YAML as input and returns generated Prometheus rules or an error message.
 func generateSLOFromRaw(this js.Value, args []js.Value) interface{} {
+	ctx := context.Background()
+
 	if len(args) < 1 {
 		return js.ValueOf("missing SLO YAML input")
 	}
 
 	sloSpec := []byte(args[0].String())
-	ctx := context.Background()
+	sloPluginSpec := ""
+	if len(args) >= 2 {
+		sloPluginSpec = args[1].String()
+	}
+	generator, err := getGenerator(sloPluginSpec)
+	if err != nil {
+		return js.ValueOf("Error: " + err.Error())
+	}
 
-	slo, err := sloGenerator.GenerateFromRaw(ctx, sloSpec)
+	slo, err := generator.GenerateFromRaw(ctx, sloSpec)
 	if err != nil {
 		return js.ValueOf("Error: " + err.Error())
 	}
