@@ -37,8 +37,9 @@ func getGenerator(sloPlugin string) (*sloth.PrometheusSLOGenerator, error) {
 	plugFS := make(fstest.MapFS)
 	plugFS["plugin.go"] = &fstest.MapFile{Data: []byte(sloPlugin)}
 	gen, err := sloth.NewPrometheusSLOGenerator(sloth.PrometheusSLOGeneratorConfig{
-		ExtraLabels: map[string]string{"source": "wasm-sloth"},
-		PluginsFS:   []fs.FS{plugFS},
+		ExtraLabels:   map[string]string{"source": "wasm-sloth"},
+		PluginsFS:     []fs.FS{plugFS},
+		StrictPlugins: true,
 	})
 	if err != nil {
 		return nil, err
