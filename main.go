@@ -15,6 +15,7 @@ import (
 	"syscall/js"
 	"testing/fstest"
 
+	slothmodel "github.com/slok/sloth/pkg/common/model"
 	sloth "github.com/slok/sloth/pkg/lib"
 )
 
@@ -49,8 +50,8 @@ func getGenerator(sloPlugin string) (*sloth.PrometheusSLOGenerator, error) {
 }
 
 type sloGenOut struct {
-	ResultRendered string                            `json:"resultRendered"`
-	Result         sloth.SLOGroupPrometheusStdResult `json:"result"`
+	ResultRendered string                        `json:"resultRendered"`
+	Result         slothmodel.PromSLOGroupResult `json:"result"`
 }
 
 // generateSLOFromRaw is a JS-exposed function that takes SLO YAML as input and returns generated Prometheus rules or an error message.
@@ -78,19 +79,19 @@ func generateSLOFromRaw(this js.Value, args []js.Value) interface{} {
 
 	var resultB bytes.Buffer
 	switch {
-	case slo.SLOGroup.OriginalSource.K8sSlothV1 != nil:
-		kmeta := sloth.K8sMeta{
-			Name:        slo.SLOGroup.OriginalSource.K8sSlothV1.ObjectMeta.Name,
-			Namespace:   slo.SLOGroup.OriginalSource.K8sSlothV1.ObjectMeta.Namespace,
-			Labels:      slo.SLOGroup.OriginalSource.K8sSlothV1.Labels,
-			Annotations: slo.SLOGroup.OriginalSource.K8sSlothV1.Annotations,
+	case slo.OriginalSource.K8sSlothV1 != nil:
+		kmeta := slothmodel.K8sMeta{
+			Name:        slo.OriginalSource.K8sSlothV1.ObjectMeta.Name,
+			Namespace:   slo.OriginalSource.K8sSlothV1.ObjectMeta.Namespace,
+			Labels:      slo.OriginalSource.K8sSlothV1.Labels,
+			Annotations: slo.OriginalSource.K8sSlothV1.Annotations,
 		}
-		err := sloth.WriteResultAsK8sPrometheusOperator(ctx, kmeta, *slo, &resultB)
+		err := generator.WriteResultAsK8sPrometheusOperator(ctx, kmeta, *slo, &resultB)
 		if err != nil {
 			return js.ValueOf("Error: " + err.Error())
 		}
 	default:
-		err := sloth.WriteResultAsPrometheusStd(ctx, *slo, &resultB)
+		err := generator.WriteResultAsPrometheusStd(ctx, *slo, &resultB)
 		if err != nil {
 			return js.ValueOf("Error: " + err.Error())
 		}
